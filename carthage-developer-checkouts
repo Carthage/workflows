@@ -1,0 +1,52 @@
+#!/bin/bash
+#
+# This script replaces Carthage checkouts with symlinks pointed inside the
+# parent directory (..), useful for developing dependencies in coordination with
+# the parent project, while avoiding the need for submodules.
+#
+# Usage:
+#   cd ProjectFolder && /path/to/carthage-developer-checkouts
+
+mkdir -p "Carthage/Checkouts/"
+
+parent_dir=$(dirname "$PWD")
+
+sed -E 's/(github|git) \"[^\/]+\/([^\"]+)\" \"([^\"]+)\"/\2 \3/g' Cartfile.resolved | while read line
+do
+    read -a array <<< "$line"
+
+    dependency=${array[0]}
+    version=${array[1]}
+
+    dependency_dir="$parent_dir/$dependency"
+    checkout_dir="Carthage/Checkouts/$dependency"
+
+    echo "*** Setting up $dependency"
+
+    if [ -d "$dependency_dir/.git" ]
+    then
+        pushd "$dependency_dir" >/dev/null
+
+        git rev-parse "$version^{commit}" >/dev/null 2>&1
+        if [ $? -ne 0 ]
+        then
+            echo -e "\tFetching"
+            git fetch --prune --quiet || exit $?
+        fi
+
+        echo -e "\tChecking out $version"
+        git checkout --quiet "$version" || exit $?
+
+        # TODO: Update submodules
+
+        popd >/dev/null
+
+        echo -e "\tSymlinking $checkout_dir -> $dependency_dir"
+        rm -rf "$checkout_dir" || exit $?
+        ln -s "$dependency_dir" "$checkout_dir" || exit $?
+    else
+        echo -e "\tWarning: $dependency has not yet been cloned to $dependency_dir, skipping symlink."
+    fi
+
+    echo
+done
