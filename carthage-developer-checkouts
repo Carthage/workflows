@@ -9,6 +9,7 @@
 
 mkdir -p "Carthage/Checkouts/"
 
+project_dir=$PWD
 parent_dir=$(dirname "$PWD")
 
 sed -E 's/(github|git) \"[^\/]+\/([^\"]+)\" \"([^\"]+)\"/\2 \3/g' Cartfile.resolved | while read line
@@ -40,6 +41,11 @@ do
         # TODO: Update submodules
 
         popd >/dev/null
+
+		echo -e "\tSymlinking $dependency/Carthage/Build -> $project_dir/Carthage/Build"
+		mkdir -p "$dependency_dir/Carthage" || exit $?
+		rm -rf "$dependency_dir/Carthage/Build" || exit $?
+		ln -s "$project_dir/Carthage/Build" "$dependency_dir/Carthage/Build" || exit $?
 
         echo -e "\tSymlinking $checkout_dir -> $dependency_dir"
         rm -rf "$checkout_dir" || exit $?
