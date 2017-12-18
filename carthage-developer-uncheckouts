@@ -1,0 +1,44 @@
+#!/bin/bash
+#
+# This script reverses the effect of carthage-developer-checkouts.
+#
+# Usage:
+#   cd ProjectFolder && /path/to/carthage-developer-uncheckouts
+
+mkdir -p "Carthage/Checkouts/"
+
+project_dir=$PWD
+parent_dir=$(dirname "$PWD")
+
+sed -E 's/(github|git) \"[^\/]+\/([^\"]+)\" \"([^\"]+)\"/\2 \3/g' Cartfile.resolved | while read line
+do
+    read -a array <<< "$line"
+
+    dependency=${array[0]}
+
+    dependency_dir="$parent_dir/$dependency"
+    checkout_dir="Carthage/Checkouts/$dependency"
+
+    echo "*** Reverting $dependency"
+
+    if [ -d "$dependency_dir/.git" -a -L "$checkout_dir" ]
+    then
+		if [ -L "$dependency_dir/Carthage/Build" ]
+		then
+			echo -e "\tRemoving symlink $dependency/Carthage/Build -> $project_dir/Carthage/Build"
+			rm -rf "$dependency_dir/Carthage/Build" || exit $?
+		fi
+
+        echo -e "\tRemoving symlink $checkout_dir -> $dependency_dir"
+        rm -rf "$checkout_dir" || exit $?
+    else
+        echo -e "\tWarning: $dependency symlink not found, skipping."
+    fi
+
+    if [ -L "Carthage/Build" ]
+    then
+		rm -rf "Carthage/Build"
+	fi
+
+    echo
+done
