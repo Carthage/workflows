@@ -35,6 +35,8 @@ do
 
         echo -e "\tRemoving symlink $checkout_dir -> $dependency_dir"
         rm -rf "$checkout_dir" || exit $?
+
+        carthage checkout $dependency
     else
         echo -e "\tWarning: $dependency symlink not found, skipping."
     fi
