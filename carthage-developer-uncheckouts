@@ -41,6 +41,7 @@ do
         echo -e "\tWarning: $dependency symlink not found, skipping."
     fi
 
+    # Remove Build folder since it might be out of date now
     if [ -L "Carthage/Build" ]
     then
 		rm -rf "Carthage/Build"
