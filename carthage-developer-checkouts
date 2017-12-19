@@ -12,7 +12,7 @@ mkdir -p "Carthage/Checkouts/"
 project_dir=$PWD
 parent_dir=$(dirname "$PWD")
 
-sed -E 's/(github|git) \"[^\/]+\/([^\"]+)\" \"([^\"]+)\"/\2 \3/g' Cartfile.resolved | while read line
+sed -E 's/(github|git) \".+\/([^\"]+)\" \"([^\"]+)\"/\2 \3/g' Cartfile.resolved | while read line
 do
     read -a array <<< "$line"
 
