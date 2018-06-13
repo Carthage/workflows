@@ -1,0 +1,51 @@
+#!/bin/bash
+#
+# This script reverses the effect of carthage-developer-checkouts.
+#
+# Usage:
+#   cd ProjectFolder && /path/to/carthage-developer-uncheckouts
+
+mkdir -p "Carthage/Checkouts/"
+
+project_dir=$PWD
+parent_dir=$(dirname "$PWD")
+
+sed -E 's/(github|git|binary) \"([^\"]+)\" \"([^\"]+)\"/\2 \3/g' Cartfile.resolved | while read line
+do
+    read -a array <<< "$line"
+
+    # Handles:
+    # - ReactiveCocoa/ReactiveSwift > ReactiveSwift
+    # - https://github.com/Carthage/Carthage.git > Carthage
+    # - https://www.mapbox.com/ios-sdk/Mapbox-iOS-SDK.json > Mapbox-iOS-SDK
+    dependency=`basename ${array[0]} | awk -F'.' '{ print $1 }'`
+
+    dependency_dir="$parent_dir/$dependency"
+    checkout_dir="Carthage/Checkouts/$dependency"
+
+    echo "*** Reverting $dependency"
+
+    if [ -d "$dependency_dir/.git" -a -L "$checkout_dir" ]
+    then
+		if [ -L "$dependency_dir/Carthage/Build" ]
+		then
+			echo -e "\tRemoving symlink $dependency/Carthage/Build -> $project_dir/Carthage/Build"
+			rm -rf "$dependency_dir/Carthage/Build" || exit $?
+		fi
+
+        echo -e "\tRemoving symlink $checkout_dir -> $dependency_dir"
+        rm -rf "$checkout_dir" || exit $?
+
+        carthage checkout $dependency --no-use-binaries
+    else
+        echo -e "\tWarning: $dependency symlink not found, skipping."
+    fi
+
+    # Remove Build folder since it might be out of date now
+    if [ -L "Carthage/Build" ]
+    then
+		rm -rf "Carthage/Build"
+	fi
+
+    echo
+done
