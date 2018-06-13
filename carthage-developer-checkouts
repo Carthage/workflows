@@ -9,14 +9,22 @@
 
 mkdir -p "Carthage/Checkouts/"
 
+project_dir=$PWD
 parent_dir=$(dirname "$PWD")
 
-sed -E 's/(github|git) \"[^\/]+\/([^\"]+)\" \"([^\"]+)\"/\2 \3/g' Cartfile.resolved | while read line
+sed -E 's/(github|git|binary) \"([^\"]+)\" \"([^\"]+)\"/\2 \3/g' Cartfile.resolved | while read line
 do
     read -a array <<< "$line"
 
-    dependency=${array[0]}
+    # Handles:
+    # - ReactiveCocoa/ReactiveSwift > ReactiveSwift
+    # - https://github.com/Carthage/Carthage.git > Carthage
+    # - https://www.mapbox.com/ios-sdk/Mapbox-iOS-SDK.json > Mapbox-iOS-SDK
+    dependency=`basename ${array[0]} | awk -F'.' '{ print $1 }'`
+
     version=${array[1]}
+
+    echo -e "Cartfile.resolved[$dependency] at $version"
 
     dependency_dir="$parent_dir/$dependency"
     checkout_dir="Carthage/Checkouts/$dependency"
@@ -40,6 +48,11 @@ do
         # TODO: Update submodules
 
         popd >/dev/null
+
+        echo -e "\tSymlinking $dependency/Carthage/Build -> $project_dir/Carthage/Build"
+        mkdir -p "$dependency_dir/Carthage" || exit $?
+        rm -rf "$dependency_dir/Carthage/Build" || exit $?
+        ln -s "$project_dir/Carthage/Build" "$dependency_dir/Carthage/Build" || exit $?
 
         echo -e "\tSymlinking $checkout_dir -> $dependency_dir"
         rm -rf "$checkout_dir" || exit $?
