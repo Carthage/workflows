@@ -4,7 +4,20 @@
 # sync with the commitish values in the Carthage/Build/*.version files.
 #
 # Usage:
-#   cd ProjectFolder && /path/to/carthage-verify
+#   cd ProjectFolder && /path/to/carthage-verify [-m no_skip_missing]
+
+no_skip_missing=0
+
+while [ "$1" != "" ]; do
+    case $1 in
+        -m | --no_skip_missing )    
+            shift
+            no_skip_missing=1
+            ;;
+    esac
+    shift
+done
+
 
 sed -E 's/(github|git|binary) \"([^\"]+)\" \"([^\"]+)\"/\2 \3/g' Cartfile.resolved | while read line
 do
@@ -24,9 +37,17 @@ do
 
     if [ ! -f "$version_file" ]
     then
-        echo -e "No version file found for $dependency at $version_file, skipping."
-        echo
-        continue
+        echo -e -n "No version file found for $dependency at $version_file, "
+
+        if [ $no_skip_missing -eq 1 ]
+        then
+            echo "aborting."
+            exit 2
+        else
+            echo "skipping."
+            echo
+            continue
+        fi
     fi
 
     version_file_commitish=`grep -o '"commitish".*"' "$version_file" | awk -F'"' '{ print $4 }'`
