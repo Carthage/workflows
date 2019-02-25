@@ -25,9 +25,10 @@ do
 
     # Handles:
     # - ReactiveCocoa/ReactiveSwift > ReactiveSwift
+    # - Auth0/JWTDecode.swift > JWTDecode.swift
     # - https://github.com/Carthage/Carthage.git > Carthage
     # - https://www.mapbox.com/ios-sdk/Mapbox-iOS-SDK.json > Mapbox-iOS-SDK
-    dependency=`basename ${array[0]} | awk -F'.' '{ print $1 }'`
+    dependency=`basename ${array[0]} | awk -F '.(git|json)' '{print $1}'`
 
     resolved_commitish=${array[1]}
 
