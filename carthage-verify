@@ -38,14 +38,14 @@ do
 
     if [ ! -f "$version_file" ]
     then
-        echo -e -n "No version file found for $dependency at $version_file, "
+        echo -e -n "No version file found for $dependency at $version_file, " >&2
 
         if [ $no_skip_missing -eq 1 ]
         then
-            echo "aborting."
+            echo "aborting." >&2
             exit 2
         else
-            echo "skipping."
+            echo "skipping." >&2
             echo
             continue
         fi
@@ -57,8 +57,7 @@ do
 
     if [ "$resolved_commitish" != "$version_file_commitish" ]
     then
-        echo
-        echo -e "$dependency commitish ($version_file_commitish) does not match resolved commitish ($resolved_commitish)"
+        echo -e "$dependency commitish ($version_file_commitish) does not match resolved commitish ($resolved_commitish)" >&2
         exit 1
     fi
 
