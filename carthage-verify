@@ -4,15 +4,18 @@
 # sync with the commitish values in the Carthage/Build/*.version files.
 #
 # Usage:
-#   cd ProjectFolder && /path/to/carthage-verify [-m no_skip_missing]
+#   cd ProjectFolder && /path/to/carthage-verify [-m no_skip_missing] [-s no_strict]
 
 no_skip_missing=0
+no_strict=0
 
 while [ "$1" != "" ]; do
     case $1 in
-        -m | --no_skip_missing )    
-            shift
+        -m | --no_skip_missing )
             no_skip_missing=1
+            ;;
+        -s | --no_strict )
+            no_strict=1
             ;;
     esac
     shift
@@ -57,8 +60,13 @@ do
 
     if [ "$resolved_commitish" != "$version_file_commitish" ]
     then
-        echo -e "$dependency commitish ($version_file_commitish) does not match resolved commitish ($resolved_commitish)" >&2
-        exit 1
+        if [ $no_strict -eq 1 ]
+        then
+            echo -e "warning: $dependency commitish ($version_file_commitish) does not match resolved commitish ($resolved_commitish)" >&2
+        else
+            echo -e "error: $dependency commitish ($version_file_commitish) does not match resolved commitish ($resolved_commitish)" >&2
+            exit 1
+        fi
     fi
 
     echo
